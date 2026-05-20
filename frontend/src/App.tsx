@@ -301,8 +301,6 @@ function App() {
             />
           }
         />
-
-
         <Route
           path="/post/:id"
           element={
