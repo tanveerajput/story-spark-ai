@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../../models/post";
-import LoadingAnimation from "../loading/loading.component";
 
 interface IExploreViewListComponentProps {
   posts: Post[];

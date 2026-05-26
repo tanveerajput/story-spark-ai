@@ -3,7 +3,7 @@ import catchAsync from "../../../shared/catch_async";
 import { getToken } from "../../middleware/token";
 import sendResponse from "../../../shared/send_response";
 import httpStatus from "http-status";
-import { AnalyticsService } from "../analytics.service";
+import { AnalyticsService } from "./analytics.service";
 
 const getAnalyticsOverview = catchAsync(async (req: Request, res: Response) => {
   const token = await getToken(req);

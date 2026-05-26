@@ -289,6 +289,7 @@ const FooterComponent = () => {
             ))}
           </div>
         </div>
+      </div>
     </footer>
   );
 };

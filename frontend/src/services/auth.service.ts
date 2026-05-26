@@ -22,9 +22,6 @@ const getValidDecodedToken = () => {
   const authToken = getFromLocalStorage(AUTH_KEY);
 
   if (authToken) {
-      if (!authToken) {
-    return null;
-  }
     try {
       const decodedData = decodedToken(authToken);
           if (
@@ -51,6 +48,7 @@ const getValidDecodedToken = () => {
       return null;
     }
   }
+  return null;
 };
 
 export const storeUserInfo = ({ accessToken }: AccessToken) => {
@@ -77,14 +75,6 @@ export const getUserInfo = (): AuthUserInfo | null => {
 };
 export const isLoggedIn = () => {
   return !!getValidDecodedToken();
-  const authToken = getFromLocalStorage(AUTH_KEY);
-  if (!authToken) return false;
-  try {
-    const decoded = decodedToken(authToken);
-    return decoded?.exp ? decoded.exp > Date.now() / 1000 : false;
-  } catch  {
-    return false;
-  }
 };
 
 export const removeUserInfo = () => {

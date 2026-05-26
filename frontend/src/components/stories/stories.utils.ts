@@ -38,6 +38,14 @@ export const doPublishAccessibility = (subscriptionType: string) => {
 export const SELECTED_TOPIC_CLASSES = "bg-indigo-100 text-indigo-800";
 export const UNSELECTED_TOPIC_CLASSES = "bg-slate-700 text-slate-300";
 
+export interface ITopicData {
+  title: string;
+  color: string;
+  className: string;
+  selected: boolean;
+}
+
+export const TOPICS: ITopicData[] = [
   {
     title: "#StoryIdeas",
     color: "bg-indigo-100 text-indigo-800",
@@ -81,13 +89,6 @@ export const UNSELECTED_TOPIC_CLASSES = "bg-slate-700 text-slate-300";
     selected: false,
   },
 ];
-
-export interface ITopicData {
-  title: string;
-  color: string;
-  className: string;
-  selected: boolean;
-}
 
 export const topicsData: ITopicData[] = TOPICS;
 
