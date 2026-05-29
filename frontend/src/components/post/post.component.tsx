@@ -38,16 +38,7 @@ const ExploreComponent = () => {
 
   const { data, isLoading } = useGetPostListsQuery({ ...query });
 
-  const filteredPosts =
-    selectedTags.length === 0
-      ? data?.posts || []
-      : (data?.posts || []).filter((post: Post) =>
-          selectedTags.some(
-            (selectedTag) =>
-              post.tag?.toLowerCase().trim() ===
-              selectedTag.toLowerCase().replace("#", "").trim(),
-          ),
-        );
+  const filteredPosts = data?.posts || [];
 
   const resetAllStates = () => {
     setSortBy("createdAt");
@@ -115,8 +106,6 @@ const ExploreComponent = () => {
         {/* Main Layout */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar */}
-
-
           <div className="w-full md:w-64 flex-shrink-0">
             <div className="sticky top-4 bg-gray-50 border border-gray-200 text-slate-900 backdrop-blur-xl rounded-2xl p-6 shadow-xl z-10 transition-colors duration-300 dark:bg-slate-900/50 dark:border-none dark:text-white">
               <div className="flex justify-between items-center mb-4">
@@ -135,11 +124,6 @@ const ExploreComponent = () => {
               <div className="space-y-6">
                 {/* Genres */}
                 <div>
-
-
-                 
-
-                    
                   <h4 className="font-semibold mb-3 text-slate-700 dark:text-slate-300">
                     Genres
                   </h4>
@@ -147,17 +131,12 @@ const ExploreComponent = () => {
                   <div className="space-y-2">
                     {availableGenres.map((genre) => (
                       <label key={genre} className="flex items-center">
-
-  
-
                         <input
                           type="checkbox"
                           className="rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500 cursor-pointer transition-all dark:border-slate-600 dark:bg-slate-700/50 dark:text-blue-500"
                           checked={selectedTags.includes(genre.toLowerCase())}
                           onChange={() => handleTagClick(genre.toLowerCase())}
                         />
-
-
                         <span className="ml-3 text-sm text-slate-600 cursor-pointer hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-300">
                           {genre}
                         </span>

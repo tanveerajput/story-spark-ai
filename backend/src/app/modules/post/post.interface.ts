@@ -12,6 +12,10 @@ export interface IPostPayload {
   tag: string;
   imageURL: string;
   topic: ITopic[];
+  language?: string;
+  emotions?: string[];
+  genre?: string;
+  isPublished?: boolean;
 }
 
 export interface IPost extends IPostPayload {
@@ -21,6 +25,9 @@ export interface IPost extends IPostPayload {
   viewsCount: number;
   isPublished: boolean;
   isFeaturedPost?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: Types.ObjectId;
   publishedAt?: Date;
   updatedBy?: Types.ObjectId;
   attachments?: string[];
