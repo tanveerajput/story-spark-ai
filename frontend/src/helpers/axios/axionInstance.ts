@@ -22,7 +22,7 @@ instance.interceptors.request.use(
   function (config) {
     const accessToken = getFromLocalStorage(AUTH_KEY);
     if (accessToken) {
-      config.headers.Authorization = accessToken;
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
