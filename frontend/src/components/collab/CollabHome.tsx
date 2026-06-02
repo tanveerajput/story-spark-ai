@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../../socket/socket.oi";
 import { getUserInfo, isLoggedIn } from "../../services/auth.service";
+<<<<<<< HEAD
 import { io } from "socket.io-client";
 
+=======
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 export default function CollabHome() {
   const navigate = useNavigate();
   const [joinRoomId, setJoinRoomId] = useState("");
@@ -26,6 +29,7 @@ export default function CollabHome() {
         return;
       }
 
+<<<<<<< HEAD
       const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
       const collabSocket = io(`${socketUrl}/collab`, {
         transports: ["websocket"],
@@ -33,6 +37,9 @@ export default function CollabHome() {
           token: localStorage.getItem("AUTH_KEY")
         }
       });
+=======
+      const collabSocket = socket;
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
       collabSocket.emit(
         "collab:create_room",
@@ -96,7 +103,11 @@ export default function CollabHome() {
             disabled={isCreating}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 text-white font-semibold text-lg transition-all shadow-lg shadow-indigo-500/20"
           >
+<<<<<<< HEAD
             {isCreating ? "Creating..." : "✨ Create a New Story Room"}
+=======
+            {isCreating ? "Creating Room..." : "✨ Create a New Story Room"}
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
           </button>
 
           <div className="flex items-center gap-3">

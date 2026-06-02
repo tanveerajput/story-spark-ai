@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { useForm, SubmitHandler } from "react-hook-form";
+=======
+﻿import { useForm, SubmitHandler } from "react-hook-form";
+import SSInput from "../ui-component/ss-input/ss-input";
+import SSButton from "../ui-component/ss-button/ss-button";
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 import { useState, useEffect } from "react";
 import { storeUserInfo } from "../../services/auth.service";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,8 +13,7 @@ import {
   useVerifyOtpMutation,
 } from "../../redux/apis/otp.verify.api";
 import { useRegisterUserMutation } from "../../redux/apis/auth.api";
-import { WandSparkles, BookOpen, UsersRound } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface IRegisterInfo {
   name: string;
@@ -54,7 +59,6 @@ const PASSWORD_REQUIREMENTS = [
 
 const SignUpComponent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [emailVerify] = useEmailVerifyMutation();
   const [verifyOtp] = useVerifyOtpMutation();
   const [registerUser] = useRegisterUserMutation();
@@ -95,7 +99,52 @@ const SignUpComponent = () => {
 
     setIsBusy(true);
     try {
+<<<<<<< HEAD
       const res = await emailVerify({ name: data.name, email: data.email }).unwrap();
+=======
+      const otpResponse = await verifyOtp({
+        email: registerInfo.email,
+        otp: enteredOtp,
+      }).unwrap();
+
+      if (otpResponse?.data?.verificationToken) {
+        const res = await registerUser({
+          ...registerInfo,
+          verificationToken: otpResponse.data.verificationToken,
+        }).unwrap();
+
+        if (res.data.accessToken) {
+          toast.success("OTP validated successfully!");
+          storeUserInfo({ accessToken: res.data.accessToken });
+          navigate("/");
+        }
+      } else {
+        throw new Error("No verification token received");
+      }
+    } catch (err: unknown) {
+      const message =
+        (err as { data?: Array<{ message?: string }> })?.data?.[0]?.message ||
+        "OTP verification failed. Please check the code and try again.";
+      toast.error(message);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0 || isBusy) return;
+    if (!registerInfo) {
+      toast.error("Something went wrong. Please restart the process.");
+      return;
+    }
+    setIsBusy(true);
+    try {
+      const otpPayload = {
+        name: registerInfo.name,
+        email: registerInfo.email,
+      };
+      const res = await emailVerify({ ...otpPayload }).unwrap();
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
       if (res?.data) {
         setExpiredAt(new Date(res.data.expiresAt).getTime());
         toast.success("OTP sent to your email");
@@ -111,6 +160,7 @@ const SignUpComponent = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen flex items-center justify-center p-4 md:p-6 bg-white dark:bg-[#050816] text-black dark:text-white transition-all duration-300">
       <main className="auth-container flex flex-col md:flex-row overflow-hidden rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_0_40px_rgba(168,85,247,0.12)] w-full max-w-6xl bg-white dark:bg-[#0b1020]">
 
@@ -215,6 +265,209 @@ const SignUpComponent = () => {
         </section>
       </main>
       <Toaster position="top-right" />
+=======
+    <div className="min-h-[calc(100dvh-4.5rem)] bg-slate-900 text-slate-100 flex items-center justify-center relative overflow-hidden px-4 py-8">
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="flex w-full max-w-md flex-col justify-center py-12 relative z-10 px-4">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8">
+          <h2 className="text-center text-4xl sm:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400 drop-shadow-sm">
+            STORY SPARK AI
+          </h2>
+        </div>
+
+        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-2xl w-full min-w-0 overflow-hidden">
+          <h3 className="text-center text-2xl font-bold tracking-tight text-slate-200">
+            {showOtpField ? "Verify Your Email" : "Create Account"}
+          </h3>
+
+          {!showOtpField && (
+            <p className="mt-2 mb-6 text-center text-sm text-slate-400">
+              Join StorySparkAI and begin your creative journey.
+            </p>
+          )}
+
+          {!showOtpField && (
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-700/50"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-slate-800/60 text-slate-400 font-semibold">
+                  SIGN UP WITH EMAIL
+                </span>
+              </div>
+            </div>
+          )}
+
+          {!showOtpField ? (
+            <form className="space-y-5 w-full min-w-0 overflow-hidden" onSubmit={handleSubmit(onSubmit)}>
+              <SSInput
+                label="Name"
+                name="name"
+                placeholder="Enter your name"
+                required={true}
+                icon="fi fi-rr-user"
+                register={register}
+                autoComplete="name"
+                validation={{
+                  required: "Name is required",
+                minLength: {
+                value: 2,
+                message: "Name must be at least 2 characters",
+                },
+                  pattern: {
+                    value: /^[A-Za-z0-9\s._]+$/,
+                    message:
+                      "Only letters, numbers, spaces, underscores, and dots are allowed",
+                  },
+                }}
+                error={errors.name}
+              />
+
+              <SSInput
+                label="Email address"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                required={true}
+                icon="fi fi-rr-envelope"
+                register={register}
+                autoComplete="email"
+                error={errors.email}
+              />
+
+              <SSInput
+                label="Password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                required={true}
+                icon="fi fi-rr-lock"
+                register={register}
+                autoComplete="new-password"
+                error={errors.password}
+              />
+
+              {password?.length > 0 && (
+              <div className="space-y-3 -mt-2 min-w-0 overflow-hidden">
+                <div
+                  className="w-full h-2 bg-slate-700 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={passedChecks}
+                  aria-valuemin={0}
+                  aria-valuemax={PASSWORD_REQUIREMENTS.length}
+                  aria-label="Password strength"
+                >
+                  <div
+                    className={`h-full transition-all duration-300 ${barColor} ${barWidth}`}
+                  ></div>
+                </div>
+
+                <p
+                  className={`text-sm font-medium truncate ${textColor}`}
+                  aria-live="polite"
+                >
+                  {strengthLabel} Password
+                </p>
+
+                <ul className="space-y-1 text-xs min-w-0">
+                  {PASSWORD_REQUIREMENTS.map(({ key, label }) => {
+                    const met = passwordChecks[key];
+                    return (
+                      <li
+                        key={key}
+                        className={`${met ? "text-green-400" : "text-red-400"} truncate`}
+                        aria-label={`${label}: ${met ? "met" : "not met"}`}
+                      >
+                        <span aria-hidden="true">{met ? "Γ£à" : "Γ¥î"}</span>{" "}
+                        {label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+)}
+
+              <SSInput
+                label="Confirm Password"
+                name="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                required={true}
+                icon="fi fi-rr-eye"
+                register={register}
+                autoComplete="new-password"
+                error={errors.confirmPassword}
+              />
+
+              <SSButton text="Sign Up" type="submit" isLoading={isBusy} />
+            </form>
+          ) : (
+            <div className="space-y-5">
+              <SSInput
+                label="OTP"
+                name="otp"
+                placeholder="Enter your OTP"
+                required={true}
+                icon="fi fi-rr-key"
+                register={register}
+                validation={{
+                  required: "Please enter OTP",
+                  minLength: {
+                    value: 6,
+                    message: "OTP must be 6 digits",
+                  },
+                  maxLength: {
+                    value: 6,
+                    message: "OTP must be 6 digits",
+                  },
+                  pattern: {
+                    value: /^[0-9]{6}$/,
+                    message: "OTP must contain only numbers",
+                  },
+                }}
+                error={errors.otp}
+              />
+
+              <SSButton
+                text="Verify OTP"
+                type="button"
+                onClick={handleOtpValidation}
+                isLoading={isBusy}
+              />
+
+              <div className="text-center mt-2">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={cooldown > 0 || isBusy}
+                  className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 disabled:text-gray-500 transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed"
+                >
+                  {cooldown > 0 ? `Resend OTP (${cooldown}s)` : "Resend OTP"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showOtpField && (
+            <p className="mt-8 text-center text-sm text-slate-400">
+              Already have an account?{" "}
+              <a
+                href="/login"
+                className="font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200"
+              >
+                Sign In
+              </a>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Toaster position="top-right" reverseOrder={false} />
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
     </div>
   );
 };

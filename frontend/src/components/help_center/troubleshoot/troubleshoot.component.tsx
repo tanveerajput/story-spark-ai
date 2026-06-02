@@ -9,30 +9,26 @@ interface TroubleshootProps {
 
 const Troubleshoot: FC<TroubleshootProps> = ({ items }) => {
   return (
-    <motion.section
-      id="troubleshoot-section"
-      className="scroll-mt-28 transition-colors duration-300"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.5 }}
-    >
+    <section id="troubleshoot-section" className="scroll-mt-28 transition-colors duration-300">
       <div className="mb-10 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/20 bg-orange-500/10 text-orange-400 mb-4">
           <i className="fa-solid fa-screwdriver-wrench"></i>
           <span className="text-sm font-semibold">TROUBLESHOOTING GUIDE</span>
         </div>
-
         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
           Fix Common Problems
         </h2>
+<<<<<<< HEAD
 
+=======
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
         <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
           Diagnose and resolve common StorySparkAI issues quickly with guided
           troubleshooting steps and recommended fixes.
         </p>
       </div>
 
+<<<<<<< HEAD
       {/* Conditional Rendering: Empty State vs. List */}
       {items.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] p-12 text-center">
@@ -62,6 +58,22 @@ const Troubleshoot: FC<TroubleshootProps> = ({ items }) => {
         </div>
       )}
     </motion.section>
+=======
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {items.map((item, index) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: index * 0.05 }}
+          >
+            <TroubleshootCard item={item} />
+          </motion.div>
+        ))}
+      </div>
+    </section>
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
   );
 };
 

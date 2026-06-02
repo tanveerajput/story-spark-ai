@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { isLoggedIn } from "../../../services/auth.service";
 import { useToggleFollowMutation } from "../../../redux/apis/user.api";
 import ImageFallback from "../../ImageFallback";
+=======
+﻿import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { isLoggedIn } from "../../../services/auth.service";
+import { useToggleFollowMutation } from "../../../redux/apis/user.api";
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
 const RecommendedWritersComponent = () => {
   const recommendedWriters = [
@@ -36,21 +43,35 @@ const RecommendedWritersComponent = () => {
           {recommendedWriters.map((writer, index) => (
             <div key={writer.id} className="flex items-center justify-between">
               <div className="flex items-center">
+<<<<<<< HEAD
                 <ImageFallback
+=======
+                <img
+                  className="h-10 w-10 rounded-full"
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
                   src={writer.image}
                   alt={writer.name}
                   className="h-10 w-10 rounded-full object-cover border border-slate-200 dark:border-transparent"
                 />
+
                 <div className="ml-3">
                   <p className="text-sm font-medium text-slate-700 dark:text-gray-400">{writer.name}</p>
                   <p className="text-xs text-slate-500 dark:text-gray-500">{writer.role}</p>
                 </div>
               </div>
+<<<<<<< HEAD
               <button
                 disabled={isLoading}
                 onClick={() => toggleFollow(index, writer.id)}
                 className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50 ${following.includes(index) ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white" : "bg-indigo-600 text-white hover:bg-indigo-700"
                   }`}
+=======
+
+              <button
+                onClick={() => toggleFollow(index, writer.id)}
+                disabled={isLoading}
+                className="!rounded-button text-indigo-600 text-sm font-medium hover:text-indigo-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
               >
                 {following.includes(index) ? "Following" : "Follow"}
               </button>

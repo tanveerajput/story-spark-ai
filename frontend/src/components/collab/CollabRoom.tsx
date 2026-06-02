@@ -1,8 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { connectSocket } from "../../socket/socket.oi";
+import { connectSocket, getSocketIo } from "../../socket/socket.oi";
 import { isLoggedIn, getUserInfo } from "../../services/auth.service";
+<<<<<<< HEAD
 import { io, Socket } from "socket.io-client";
+=======
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
 interface Participant {
   userId: string;
@@ -27,6 +30,18 @@ interface Room {
   story: StoryChunk[];
   createdAt: Date;
 }
+<<<<<<< HEAD
+=======
+
+interface CollabRoomResponse {
+  room?: Room;
+  message?: string;
+}
+
+interface CollabStoryResponse {
+  story?: StoryChunk[];
+}
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
 export default function CollabRoom() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,8 +51,11 @@ export default function CollabRoom() {
   const [error, setError] = useState<string | null>(null);
   const [newText, setNewText] = useState("");
   const user = getUserInfo();
+<<<<<<< HEAD
 
   const collabSocketRef = useRef<Socket | null>(null);
+=======
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -46,6 +64,7 @@ export default function CollabRoom() {
     }
 
     try {
+<<<<<<< HEAD
       const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
       const collabSocket = io(`${socketUrl}/collab`, {
         transports: ["websocket"]
@@ -54,6 +73,20 @@ export default function CollabRoom() {
       collabSocketRef.current = collabSocket;
 
       collabSocket.emit("collab:get_room", { roomId }, (response: any) => {
+=======
+      const socket = connectSocket();
+      if (!socket) {
+        setError("Socket.IO connection failed. Please check VITE_SOCKET_URL in frontend/.env");
+        setLoading(false);
+        return;
+      }
+
+      // Connect to collab namespace
+      const collabSocket = socket.io.socket("/collab");
+
+      // Request room info
+      collabSocket.emit("collab:get_room", { roomId }, (response: CollabRoomResponse) => {
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
         if (response && response.room) {
           setRoom(response.room);
           setError(null);
@@ -63,22 +96,29 @@ export default function CollabRoom() {
         setLoading(false);
       });
 
+<<<<<<< HEAD
       const handleRoomUpdated = (data: any) => {
+=======
+      // Listen for room updates
+      const handleRoomUpdated = (data: CollabRoomResponse) => {
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
         if (data && data.room) {
           setRoom(data.room);
         }
       };
 
-      const handleStoryUpdated = (data: any) => {
+      const handleStoryUpdated = (data: CollabStoryResponse) => {
         if (data && data.story) {
-          setRoom((prev) => (prev ? { ...prev, story: data.story } : null));
+          setRoom((prev) =>
+            prev && data.story ? { ...prev, story: data.story } : prev,
+          );
         }
       };
 
       collabSocket.on("collab:room_updated", handleRoomUpdated);
       collabSocket.on("collab:story_updated", handleStoryUpdated);
-      collabSocket.on("collab:error", (data: any) => {
-        setError(data.message);
+      collabSocket.on("collab:error", (data: CollabRoomResponse) => {
+        setError(data.message ?? "Collaboration error");
         setLoading(false);
       });
 
@@ -97,8 +137,14 @@ export default function CollabRoom() {
   const handleAddText = () => {
     if (!newText.trim() || !user) return;
 
+<<<<<<< HEAD
     if (collabSocketRef.current) {
       collabSocketRef.current.emit("collab:add_text", {
+=======
+    const socket = getSocketIo();
+    if (socket) {
+      socket.io.socket("/collab").emit("collab:add_text", {
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
         roomId,
         userId: user.userId,
         text: newText,
@@ -108,8 +154,14 @@ export default function CollabRoom() {
   };
 
   const handleAIContinue = () => {
+<<<<<<< HEAD
     if (collabSocketRef.current) {
       collabSocketRef.current.emit("collab:ai_continue", { roomId });
+=======
+    const socket = getSocketIo();
+    if (socket) {
+      socket.io.socket("/collab").emit("collab:ai_continue", { roomId });
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
     }
   };
 

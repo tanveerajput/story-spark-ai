@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿import { FC } from "react";
 import { motion } from "framer-motion";
 
@@ -7,6 +8,11 @@ interface HelpCategory {
   description: string;
   icon: string;
 }
+=======
+import { FC } from "react";
+import { HelpCategory } from "../help_center.utils";
+import HelpCategoryCard from "../help_category_card/help_category_card.component";
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
 
 interface HelpCategoriesProps {
   categories: HelpCategory[];
@@ -14,6 +20,7 @@ interface HelpCategoriesProps {
 
 const HelpCategories: FC<HelpCategoriesProps> = ({ categories }) => {
   return (
+<<<<<<< HEAD
     <motion.section
       id="help-categories"
       className="scroll-mt-28 transition-colors duration-300"
@@ -34,11 +41,24 @@ const HelpCategories: FC<HelpCategoriesProps> = ({ categories }) => {
         </h2>
 
         <p className="text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+=======
+    <section id="help-categories" className="scroll-mt-28 transition-colors duration-300">
+      <div className="mb-10 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 mb-4">
+          <i className="fa-solid fa-layer-group"></i>
+          <span className="text-sm font-semibold">HELP CATEGORIES</span>
+        </div>
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4">
+          Explore by Category
+        </h2>
+        <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
           Browse support topics designed to help you quickly understand
           StorySparkAI features, workflows, and troubleshooting steps.
         </p>
       </div>
 
+<<<<<<< HEAD
       {!categories || categories.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/[0.03] p-12 text-center">
           <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center mx-auto mb-5">
@@ -95,6 +115,14 @@ const HelpCategories: FC<HelpCategoriesProps> = ({ categories }) => {
         </div>
       )}
     </motion.section>
+=======
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {categories.map((category) => (
+          <HelpCategoryCard key={category.id} category={category} />
+        ))}
+      </div>
+    </section>
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
   );
 };
 

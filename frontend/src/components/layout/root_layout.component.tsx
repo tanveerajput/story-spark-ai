@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import NavListComponent from "../hero/nav_list.component";
 import CookieConsentBanner from "../cookie-consent/cookie-consent.component";
@@ -15,6 +15,7 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   const hideFooter = pathname === "/login" || pathname === "/signup";
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
+<<<<<<< HEAD
   // --- Header State Control ---
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]); // You can tie this to an API or context later
@@ -83,6 +84,16 @@ const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
 
       {!hideFooter && <FooterComponent />}
 
+=======
+  return (
+    <div className={`flex flex-col min-h-screen bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100 ${!isAuthPage ? "pb-20 lg:pb-0" : ""}`}>
+
+      {!hideHeader && <NavListComponent />}
+
+      <CookieConsentBanner />
+      <div className="flex-grow min-h-0">{children}</div>
+      {!hideFooter && <FooterComponent />}
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
       <ChatComponent />
     </div>
   );

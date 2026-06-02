@@ -26,7 +26,28 @@ export type AuthUserInfo = {
   avatar?: string;
 };
 
+<<<<<<< HEAD
 const buildUserInfo = (decodedData: any): AuthUserInfo => ({
+=======
+// Raw shape of the decoded JWT payload — fields are optional because
+// different token versions or providers may omit some of them
+interface RawJwtPayload {
+  email?: string;
+  userId?: string;
+  _id?: string;
+  name?: string;
+  postsCount?: number;
+  role?: string;
+  subscriptionType?: string;
+  exp?: number;
+  iat?: number;
+  avatar?: string;
+}
+
+// Maps raw JWT payload to a typed AuthUserInfo object
+// Uses optional chaining + fallbacks to safely handle any missing fields
+const buildUserInfo = (decodedData: RawJwtPayload): AuthUserInfo => ({
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
   email: decodedData?.email || "",
   userId: decodedData?.userId || decodedData?._id || "",
   name: decodedData?.name || "",
@@ -45,7 +66,10 @@ const getValidDecodedToken = () => {
     try {
       const decodedData = decodedToken(authToken);
 
+<<<<<<< HEAD
       // Safety check to ensure decodedData exists before parsing properties
+=======
+>>>>>>> e32052672baa705d7f5929f0f6d4afddd09e38dc
       if (!decodedData) {
         removeFromLocalStorage(AUTH_KEY);
         return null;
