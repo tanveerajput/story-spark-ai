@@ -174,6 +174,18 @@ const router = createBrowserRouter([
     ],
   },
 
+  // Isolated layout branches (Fixed relative context matching)
+  { path: "auth/email-validation", element: <EmailValidationComponent /> },
+  {
+    element: <ProtectedRoute allowedRoles={ALL_ROLES} />,
+    children: [
+      { path: "payment", element: <PaymentComponent /> },
+      { path: "collab", element: <CollabHome /> },
+      { path: "collab/:roomId", element: <CollabRoom /> },
+    ],
+  },
+
+  // Dashboard Structure (Cleaned redundant routing conditions)
   // Isolated layout branches (Bypassing public navigation headers entirely)
   {
     path: "/auth/email-validation",
@@ -222,6 +234,10 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardComponent /> },
           { path: "profile", element: <ProfileComponent /> },
+          { path: "settings", element: <SettingComponent /> },
+          { path: "published-stories", element: <PublishedStoriesComponent /> },
+          
+          // Elevated Admin Guard
           {
             element: <ProtectedRoute allowedRoles={ELEVATED_ADMIN_ROLES} />,
             children: [
@@ -229,17 +245,14 @@ const router = createBrowserRouter([
               { path: "users", element: <UserComponent /> },
             ],
           },
-          {
-            element: <ProtectedRoute allowedRoles={ALL_ROLES} />,
-            children: [
-              { path: "settings", element: <SettingComponent /> },
-              { path: "published-stories", element: <PublishedStoriesComponent /> },
-            ],
-          },
+          
+          // Writer Only Guard
           {
             element: <ProtectedRoute allowedRoles={[USER_ROLE.WRITER]} />,
             children: [{ path: "analytics", element: <AnalyticsPage /> }],
           },
+          
+          // Elevated Access Guard for Authorship Management
           {
             element: (
               <ProtectedRoute
