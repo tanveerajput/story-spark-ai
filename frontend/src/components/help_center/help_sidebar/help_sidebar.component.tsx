@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { HELP_SECTIONS } from "../help_center.utils";
+import { HELP_SECTIONS, scrollToSection } from "../help_center.utils";
 
 const HelpSidebar: FC = () => {
   const [activeSection, setActiveSection] = useState<string>(
@@ -48,15 +48,6 @@ const HelpSidebar: FC = () => {
     };
   }, []);
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (!element) return;
-
-    const yOffset = -100;
-    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-    window.scrollTo({ top: y, behavior: "smooth" });
-  };
-
   return (
     <>
       {/* Desktop sticky sidebar */}
@@ -94,18 +85,17 @@ const HelpSidebar: FC = () => {
                       : "border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/[0.03] hover:border-blue-200 dark:hover:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.05]"
                       }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${isActive
+                    <div className="flex items-center gap-4 w-full">
+                      <div className={`flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-2xl transition-all duration-300 ${isActive
                         ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg"
                         : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 group-hover:text-blue-500"
                         }`}>
-                        <i className={`fa-solid ${section.icon}`} aria-hidden="true" />
+                        <i className={section.icon} aria-hidden="true" />
                       </div>
-                      <div>
-                        <p className={`font-semibold text-sm transition-colors duration-300 ${isActive ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300"}`}>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold text-sm truncate transition-colors duration-300 ${isActive ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300"}`}>
                           {section.label}
                         </p>
-                        {/* The 'Jump to section' text has been safely removed from here! */}
                       </div>
                     </div>
                   </button>
@@ -120,13 +110,13 @@ const HelpSidebar: FC = () => {
             >
               <div className="absolute top-0 right-0 w-28 h-28 bg-blue-500/10 rounded-full blur-3xl" />
               <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <div className="flex items-center gap-4 w-full mb-4">
+                  <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
                     <i className="fa-solid fa-sparkles text-lg" aria-hidden="true" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 dark:text-white">Need More Help?</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Contact support</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold truncate text-slate-800 dark:text-white">Need More Help?</h3>
+                    <p className="text-sm truncate text-slate-600 dark:text-slate-400">Contact support</p>
                   </div>
                 </div>
                 <button

@@ -42,7 +42,6 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.refreshToken(token as string);
   const { accessToken, refreshToken: rotatedRefreshToken } = result;
 
-  // Rotation: replace the cookie with the freshly issued refresh token.
   setRefreshTokenCookie(res, rotatedRefreshToken);
 
   sendResponse(res, {
@@ -92,6 +91,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
     message: "Password changed successfully. All previous sessions have been invalidated.",
     data: null,
   });
+}); // <--- THIS WAS MISSING
 
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
@@ -119,7 +119,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-       message: "Password reset successfully!",
+    message: "Password reset successfully!",
     data: { accessToken },
   });
 });

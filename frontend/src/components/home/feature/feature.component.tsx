@@ -1,38 +1,33 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaLinkedin, FaEnvelope, FaLink } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+
 import { Post } from "../../../models/post";
 import { useGetFeaturedListsQuery } from "../../../redux/apis/post.api";
 import { formatDateShort } from "../../../utils/time-formate";
 import LoadingAnimation from "../../loading/loading.component";
 import SSProfile from "../../ui-component/ss-profile/ss-profile";
-import { useNavigate } from "react-router-dom";
 import BookmarkButton from "../../BookmarkButton";
-import React, { useState } from "react";
-ImageFallback
-import { FaLinkedin, FaEnvelope, FaLink } from "react-icons/fa";
-import { FaXTwitter } from "react-icons/fa6";
 import ImageFallback from "../../ImageFallback";
 
 const FeatureComponent = () => {
   const { data, isLoading, isError, refetch } = useGetFeaturedListsQuery(undefined);
   const navigate = useNavigate();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const calculateReadingTime = (content: string) => Math.ceil(content.length / 500);
+
+  const handleCopyLink = (e: React.MouseEvent, id: string, url: string) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (isLoading) return <LoadingAnimation />;
+
   if (isError) {
-      return (
-        <div className="mb-12 text-slate-900 dark:text-slate-100">
-          <h2 className="text-2xl font-bold mb-6">
-            Featured Posts
-          </h2>
-    
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="animate-pulse rounded-xl bg-gray-200 dark:bg-slate-800 h-72"
-              ></div>
-            ))}
-          </div>
-        </div>
-      );
-    }
     return (
       <div className="mb-12 rounded-lg border border-red-500/20 bg-red-500/10 p-5 text-center text-red-200">
         <p className="mb-3 font-semibold">Failed to load featured posts.</p>
@@ -61,15 +56,13 @@ const FeatureComponent = () => {
               <div
                 key={post._id}
                 onClick={() => navigate(`/post/${post._id}`)}
-                className="motion-card story-panel group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500/30 shadow-md shadow-slate-100 dark:shadow-none"
+                className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500/30 shadow-md"
               >
-                <div className="relative overflow-hidden h-48">
-                  <ImageFallback
-                    className="motion-image h-full w-full object-cover"
                 <div className="relative h-48 overflow-hidden sm:h-52">
-                  <img
-                    className="motion-image h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  <ImageFallback
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     src={post.imageURL}
+                    fallbackSrc="/default-post.jpg"
                     alt={post.title || "Featured Post"}
                   />
                 </div>
@@ -78,104 +71,39 @@ const FeatureComponent = () => {
                   <div>
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center">
-                        <SSProfile
-                          name={post.author?.name || "Unknown User"}
-                          size="h-9 w-9"
-                        />
+                        <SSProfile name={post.author?.name || "Unknown User"} size="h-9 w-9" />
                         <div className="ml-3 min-w-0">
                           <p className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
                             {post.author?.name || "Unknown User"}
                           </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {formatDateShort(post.createdAt)}
-                            </p>
-                            <span className="text-xs text-slate-400 dark:text-slate-600">•</span>
-                            <p className="text-xs font-medium text-indigo-500 dark:text-indigo-300">
-                              ⏱️ {calculateReadingTime(post.content)} min read
-                            </p>
-                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {formatDateShort(post.createdAt)} • {calculateReadingTime(post.content)} min read
+                          </p>
                         </div>
                       </div>
-
-                      <div onClick={(e) => e.stopPropagation()} className="relative z-10">
-                        <BookmarkButton
-                          storyId={post._id}
-                          bookmarks={post.bookmarks}
-                          className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        />
-                      </div>
+                      <BookmarkButton storyId={post._id} bookmarks={post.bookmarks} />
                     </div>
 
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-indigo-600 transition-colors">
                       {post.title}
                     </h3>
-
                     <p className="text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 leading-relaxed">
-                      {post.content || ""}
+                      {post.content}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-4 text-sm text-slate-500 dark:text-slate-400 mt-auto">
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <i className="far fa-heart"></i> {post.likesCount ?? 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <i className="far fa-comment"></i> {post.commentsCount ?? 0}
-                      </span>
+                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-4 text-slate-500">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>♥ {post.likesCount ?? 0}</span>
+                      <span>💬 {post.commentsCount ?? 0}</span>
                     </div>
-
                     <div className="flex items-center gap-3">
-                      <a
-                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
-                          postUrl
-                        )}&text=${encodeURIComponent(post.title || "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-sky-400 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FaXTwitter size={15} />
-                      </a>
-
-                      <a
-                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                          postUrl
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-blue-500 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FaLinkedin size={15} />
-                      </a>
-
-                      <a
-                        href={`mailto:?subject=${encodeURIComponent(
-                          post.title || ""
-                        )}&body=${encodeURIComponent(
-                          `${(post.content || "").slice(
-                            0,
-                            120
-                          )}...\n\nRead more: ${postUrl}`
-                        )}`}
-                        className="hover:text-red-400 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FaEnvelope size={15} />
-                      </a>
-
-                      <button
+                      <FaXTwitter className="hover:text-sky-400" onClick={(e) => e.stopPropagation()} />
+                      <FaLinkedin className="hover:text-blue-500" onClick={(e) => e.stopPropagation()} />
+                      <FaLink
+                        className={copiedId === post._id ? "text-green-500" : "hover:text-indigo-500"}
                         onClick={(e) => handleCopyLink(e, post._id, postUrl)}
-                        className={`transition-colors duration-200 ${
-                          copiedId === post._id
-                            ? "text-green-500"
-                            : "hover:text-indigo-500"
-                        }`}
-                      >
-                        <FaLink size={15} />
-                      </button>
+                      />
                     </div>
                   </div>
                 </div>
@@ -183,8 +111,7 @@ const FeatureComponent = () => {
             );
           })
         ) : (
-          <div className="animate-pulse rounded-xl bg-gray-200 dark:bg-slate-800 h-72 w-full"></div>
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 px-4 py-5 text-slate-500 dark:text-slate-400">
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 p-5 text-slate-500">
             Featured posts are not available.
           </div>
         )}

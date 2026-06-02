@@ -4,9 +4,16 @@ import defaultAvatar from "../../../assets/logoNew.png";
 import ImageFallback from "../../ImageFallback";
 import ReviewForm from "./ReviewForm";
 
+interface Review {
+  _id: string;
+  name: string;
+  role: string;
+  feedback: string;
+  imgSrc?: string;
+}
+
 const WriterFeedbackComponent = () => {
-  const { data: feedbackData = [], isLoading } =
-    useGetReviewsQuery({});
+  const { data: feedbackData = [], isLoading } = useGetReviewsQuery({});
 
   if (isLoading) {
     return (
@@ -20,10 +27,9 @@ const WriterFeedbackComponent = () => {
     <section className="mb-16 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-gray-305">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-gray-200">
             What Our Writers Say
           </h2>
-
           <p className="mt-4 text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">
             Hear from our community of writers about their experience
           </p>
@@ -34,8 +40,8 @@ const WriterFeedbackComponent = () => {
             const avatarSrc = writer.imgSrc?.trim() ? writer.imgSrc : defaultAvatar;
             return (
               <div
-                key={writer._id ?? writer.name ?? index}
-                className="motion-card-subtle story-panel rounded-lg p-6 hover:border-blue-400/35"
+                key={writer._id ?? index}
+                className="rounded-lg p-6 border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/50 hover:border-blue-400/35 transition-all"
               >
                 <div className="flex items-center mb-4">
                   <ImageFallback
@@ -43,20 +49,17 @@ const WriterFeedbackComponent = () => {
                     src={avatarSrc}
                     alt={writer.name}
                   />
-
                   <div className="ml-4">
-                    <h4 className="text-lg font-semibold text-slate-700 dark:text-gray-450">
+                    <h4 className="text-lg font-semibold text-slate-700 dark:text-gray-200">
                       {writer.name}
                     </h4>
-
                     <p className="text-sm text-slate-600 dark:text-gray-400">
                       {writer.role}
                     </p>
                   </div>
                 </div>
-
                 <p className="text-slate-600 dark:text-gray-500 italic">
-                  &#34;{writer.feedback}&#34;
+                  "{writer.feedback}"
                 </p>
               </div>
             );

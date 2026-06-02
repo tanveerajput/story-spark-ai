@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../../models/post";
 import ImageFallback from "../ImageFallback";
-ImageFallback
 import BookmarkButton from "../BookmarkButton";
 import SSProfile from "../ui-component/ss-profile/ss-profile";
 
@@ -16,11 +15,6 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
   isLoading,
 }) => {
   const navigate = useNavigate();
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-
-  const handleImageError = (storyId: string) => {
-    setImageErrors((prev) => ({ ...prev, [storyId]: true }));
-  };
 
   const formatDate = (value?: string) => {
     if (!value) return "";
@@ -82,50 +76,18 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
               onClick={() => navigate(`/post/${story._id}`)}
               className="cursor-pointer bg-gray-50 text-slate-900 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-300 overflow-hidden group flex flex-col h-full dark:bg-slate-900/60 dark:text-white dark:border-slate-800"
             >
-              <div className="relative overflow-hidden">
+              <div className="relative overflow-hidden bg-slate-200 dark:bg-slate-800">
                 <ImageFallback
-                    src={story.imageURL}
-                    alt={`Cover image for ${story.title}`}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                  src={story.imageURL}
+                  alt={`Cover image for ${story.title}`}
+                  className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-100 to-transparent opacity-70 pointer-events-none dark:from-slate-900 dark:to-transparent dark:opacity-60"></div>
-
-                <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-md border border-gray-200 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg dark:bg-slate-900/80 dark:border-slate-600 dark:text-blue-300">
-                  {story.tag}
-                </span>
-                {/* Deep Gradient Wash */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#03050C] via-[#03050C]/20 to-transparent opacity-90" />
-                
-                {/* Floating Tags - Premium Styling */}
-                <div className="absolute top-6 left-6 flex gap-2">
-                  <span className="px-5 py-2 bg-blue-600/20 backdrop-blur-2xl border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-[0.25em] rounded-full shadow-2xl">
-              <div className="relative overflow-hidden bg-slate-200 dark:bg-slate-800">
-                {!imageErrors[story._id] && story.imageURL ? (
-                  <img
-                    src={story.imageURL}
-                    alt={`Cover image for ${story.title}`}
-                    onError={() => handleImageError(story._id)}
-                    className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
-                  />
-                ) : (
-                  <div className="w-full h-52 bg-gradient-to-br from-indigo-500/25 via-purple-500/25 to-blue-500/25 flex items-center justify-center relative">
-                    <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                    <i className="fas fa-book-open text-4xl text-indigo-400/80 relative z-10 animate-pulse" />
-                  </div>
-                )}
-
+                {/* Gradient Wash */}
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-transparent to-transparent opacity-100 pointer-events-none dark:from-slate-900/90 dark:via-transparent dark:to-transparent"></div>
 
-                <div className="absolute top-4 right-4 z-10" onClick={(e) => e.stopPropagation()}>
-                  <BookmarkButton
-                    storyId={story._id}
-                    bookmarks={story.bookmarks}
-                    className="backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20 hover:bg-white/30 p-2 !rounded-full shadow-lg hover:scale-110 transition-all duration-300"
-                  />
-                </div>
-
-                <div className="absolute top-4 left-4 flex gap-2">
+                {/* Floating Tags */}
+                <div className="absolute top-4 left-4 flex gap-2 z-10">
                   <span className="px-3 py-1 bg-indigo-600 border border-indigo-500/50 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg">
                     {story.tag}
                   </span>
@@ -134,6 +96,15 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
                       {story.language}
                     </span>
                   )}
+                </div>
+
+                {/* Bookmark */}
+                <div className="absolute top-4 right-4 z-10" onClick={(e) => e.stopPropagation()}>
+                  <BookmarkButton
+                    storyId={story._id}
+                    bookmarks={story.bookmarks}
+                    className="backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20 hover:bg-white/30 p-2 !rounded-full shadow-lg hover:scale-110 transition-all duration-300"
+                  />
                 </div>
               </div>
 
@@ -157,20 +128,20 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
                         <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider dark:text-slate-400">
                           {formatDate(story.publishedAt || story.createdAt)}
                         </span>
-                        {story.author?.profile?.bio ? (
+                        {story.author?.profile?.bio && (
                           <span className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
                             {story.author.profile.bio}
                           </span>
-                        ) : null}
+                        )}
                       </div>
                     </div>
 
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 px-2 py-1 rounded-md">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 px-2 py-1 rounded-md whitespace-nowrap">
                       {calculateReadingTime(story.content)} MIN READ
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mt-2">
                     <div className="flex gap-4">
                       <span className="flex items-center gap-1.5 hover:text-red-500 transition-colors">
                         <i className="fas fa-heart text-red-400/80"></i> {story.likesCount || 0}
@@ -189,13 +160,13 @@ const ExploreViewListComponent: React.FC<IExploreViewListComponentProps> = ({
           ))
         ) : (
           <div className="col-span-full py-16 flex flex-col items-center justify-center text-center">
-             <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800">
-               <i className="fas fa-book-open text-4xl text-slate-300 dark:text-slate-600"></i>
-             </div>
-             <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">No posts available</h3>
-             <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-               Check back later for new stories, or try adjusting your search filters.
-             </p>
+            <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center dark:bg-slate-800">
+              <i className="fas fa-book-open text-4xl text-slate-300 dark:text-slate-600"></i>
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">No posts available</h3>
+            <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+              Check back later for new stories, or try adjusting your search filters.
+            </p>
           </div>
         )}
       </div>
