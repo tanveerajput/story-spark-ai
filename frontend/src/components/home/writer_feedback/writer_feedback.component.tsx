@@ -11,8 +11,11 @@ const WriterFeedbackComponent = () => {
 
   if (isLoading) {
     return (
-      <div className="py-10 text-center text-slate-600 dark:text-gray-400">
-        Loading reviews...
+      <div className="w-full text-center py-16">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 text-slate-500 dark:text-slate-400 text-sm font-medium">
+          <i className="fa-solid fa-circle-notch animate-spin"></i>
+          Loading user feedback modules...
+        </div>
       </div>
     );
   }
@@ -157,20 +160,8 @@ const WriterFeedbackComponent = () => {
         </div>
 
         {/* Review Form Section */}
-        <div className="mt-20">
-          <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/60 p-8 shadow-xl backdrop-blur dark:bg-slate-900/60 md:p-10">
-            <div className="mb-8 text-center">
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Share Your Experience
-              </h3>
-
-              <p className="mt-3 text-slate-600 dark:text-gray-400">
-                We'd love to hear your feedback and help inspire future writers.
-              </p>
-            </div>
-
-            <ReviewForm />
-          </div>
+        <div className="mt-10">
+          <ReviewForm />
         </div>
       </div>
     </section>
