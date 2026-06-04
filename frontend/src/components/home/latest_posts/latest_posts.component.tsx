@@ -1,204 +1,121 @@
-import { useGetLatestListsQuery } from "../../../redux/apis/post.api";
-import { Post } from "../../../models/post";
-import LoadingAnimation from "../../loading/loading.component";
-import SSProfile from "../../ui-component/ss-profile/ss-profile";
-import { formatDateShort } from "../../../utils/time-formate";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import BookmarkButton from "../../BookmarkButton";
+import { Post } from "../../../models/post";
+import { useGetLatestListsQuery } from "../../../redux/apis/post.api";
+import LoadingAnimation from "../../loading/loading.component";
+
+const INITIAL_VISIBLE_COUNT = 6;
 
 const LatestPostsComponent = () => {
-  const { data, isLoading } = useGetLatestListsQuery(undefined);
+  const { data, isLoading, isError, refetch } = useGetLatestListsQuery(undefined);
   const navigate = useNavigate();
+  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
-  const calculateReadingTime = (content: string): number => {
-    if (!content) return 1;
+  useEffect(() => {
+    setShowAllPosts(false);
+  }, [data?.posts]);
 
-    const words = content.trim().split(/\s+/).length;
+  if (isLoading) return <LoadingAnimation />;
 
-    return Math.max(1, Math.ceil(words / 200));
-  };
-
-  if (isLoading) {
-    return <LoadingAnimation />;
+  if (isError) {
+    return (
+      <section className="mb-12 text-slate-100">
+        <h2 className="mb-6 text-2xl font-bold">Latest Posts</h2>
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-5 text-center text-red-200">
+          <p className="mb-3 font-semibold">Failed to load latest posts.</p>
+          <button
+            onClick={() => refetch()}
+            className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </section>
+    );
   }
 
+  const seenIds = new Set<string>();
+  const uniquePosts = (data?.posts ?? []).filter((post: Post) => {
+    if (!post?._id || seenIds.has(post._id)) return false;
+    seenIds.add(post._id);
+    return true;
+  });
+
+  const shouldShowLoadMore = uniquePosts.length > INITIAL_VISIBLE_COUNT;
+  const visiblePosts =
+    showAllPosts || !shouldShowLoadMore
+      ? uniquePosts
+      : uniquePosts.slice(0, INITIAL_VISIBLE_COUNT);
+
+  const toggleAccordion = (postId: string) => {
+    setExpandedPostId((prevId) => (prevId === postId ? null : postId));
+  };
+
   return (
-    <div className="w-full text-slate-900 dark:text-slate-100">
-      {/* Section Heading */}
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          Latest Posts
-        </h2>
+    <section className="text-slate-100">
+      <h2 className="mb-6 text-2xl font-bold">Latest Posts</h2>
+      <div className="space-y-3">
+        {visiblePosts.length > 0 ? (
+          visiblePosts.map((post: Post) => {
+            const isExpanded = expandedPostId === post._id;
 
-        <div className="h-[2px] flex-1 ml-6 bg-gradient-to-r from-blue-500/60 to-transparent rounded-full"></div>
-      </div>
+            return (
+              <div
+                key={post._id}
+                className="motion-card-subtle story-panel rounded-lg overflow-hidden border border-slate-700/30 bg-[#252b3d]/40 transition-all duration-200"
+              >
+                <button
+                  onClick={() => toggleAccordion(post._id)}
+                  className="w-full flex items-center justify-between p-4 text-left font-bold text-slate-100 hover:bg-slate-700/20 transition-colors"
+                >
+                  <span className="text-lg md:text-xl pr-4">{post.title}</span>
+                  <span className="text-slate-400 font-mono text-sm transition-transform duration-200 select-none">
+                    {isExpanded ? "▼" : "▶"}
+                  </span>
+                </button>
 
-      {/* Posts Container */}
-      <div className="flex flex-col gap-8 w-full">
-        {data?.posts?.length ?? 0 > 0 ? (
-          data?.posts?.map((post: Post) => (
-            <div
-              key={post._id}
-              onClick={() => navigate(`/post/${post._id}`)}
-              className="
-                w-full
-                motion-card-subtle
-                bg-white/70
-                dark:bg-slate-900/60
-                backdrop-blur-xl
-                rounded-3xl
-                shadow-md
-                border
-                border-slate-200
-                dark:border-slate-700/40
-                p-7
-                cursor-pointer
-                transition-all
-                duration-300
-                hover:shadow-2xl
-                hover:-translate-y-1
-                hover:border-blue-400/40
-                group
-              "
-            >
-              {/* Top Section */}
-              <div className="flex items-start justify-between gap-4 mb-5">
-                <div className="flex items-center min-w-0">
-                  <SSProfile
-                    name={post.author?.name || "Unknown User"}
-                    size="h-10 w-10"
-                  />
-
-                  <div className="ml-4 min-w-0">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-gray-300 truncate">
-                      {post.author?.name || "Unknown User"}
+                <div
+                  className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    isExpanded ? "max-h-[500px] border-t border-slate-700/30" : "max-h-0"
+                  }`}
+                >
+                  <div className="p-5 bg-[#1e2330]/30">
+                    <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-4 whitespace-pre-wrap">
+                      {post.content || "No preview content available."}
                     </p>
 
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <p className="text-xs text-slate-500 dark:text-gray-500">
-                        {formatDateShort(post.createdAt)}
-                      </p>
-
-                      <span className="text-slate-400 text-xs">•</span>
-
-                      <p className="text-xs text-purple-500 font-medium flex items-center gap-1">
-                        ⏱️ {calculateReadingTime(post.content)} min read
-                      </p>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => navigate(`/post/${post._id}`)}
+                        className="rounded-md bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 shadow-sm"
+                      >
+                        Read Full Story
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                {/* Bookmark */}
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="relative z-10 flex-shrink-0"
-                >
-                  <BookmarkButton
-                    storyId={post._id}
-                    bookmarks={post.bookmarks}
-                    className="
-                      p-2
-                      rounded-full
-                      hover:bg-slate-200
-                      dark:hover:bg-slate-700/50
-                      text-slate-400
-                      hover:text-purple-500
-                      transition-all
-                    "
-                  />
-                </div>
               </div>
-
-              {/* Title */}
-              <h3
-                className="
-                  text-2xl
-                  font-bold
-                  text-slate-900
-                  dark:text-gray-200
-                  mb-3
-                  group-hover:text-blue-500
-                  transition-colors
-                  line-clamp-2
-                "
-              >
-                {post.title}
-              </h3>
-
-              {/* Content */}
-              <p
-                className="
-                  text-slate-600
-                  dark:text-gray-400
-                  text-[15px]
-                  leading-7
-                  mb-6
-                  line-clamp-3
-                "
-              >
-                {post.content}
-              </p>
-
-              {/* Bottom Section */}
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-                {/* Likes + Comments */}
-                <div className="flex items-center text-sm text-slate-500 dark:text-gray-400 flex-wrap gap-4">
-                  <span className="flex items-center">
-                    <i className="far fa-heart mr-2"></i>
-                    {post.likesCount}
-                  </span>
-
-                  <span className="flex items-center">
-                    <i className="far fa-comment mr-2"></i>
-                    {post.commentsCount}
-                  </span>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {post.topic.map((topic) => (
-                    <span
-                      key={topic._id}
-                      className={`
-                        inline-flex
-                        items-center
-                        px-4
-                        py-1
-                        rounded-full
-                        text-xs
-                        font-semibold
-                        shadow-sm
-                        ${topic.color}
-                      `}
-                    >
-                      #{topic.title}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
-          <div
-            className="
-              rounded-2xl
-              border
-              border-slate-200
-              dark:border-slate-700/70
-              bg-slate-100
-              dark:bg-slate-900/40
-              px-6
-              py-6
-              text-slate-700
-              dark:text-slate-300
-              text-center
-            "
-          >
-            Post is not available!
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 px-4 py-5 text-slate-500 dark:text-slate-400">
+            Posts are not available.
           </div>
         )}
       </div>
-    </div>
+      {shouldShowLoadMore && !showAllPosts && (
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => setShowAllPosts(true)}
+            className="motion-cta cursor-pointer rounded-lg border border-slate-300/70 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-white dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+          >
+            Load More
+          </button>
+        </div>
+      )}
+    </section>
   );
 };
 

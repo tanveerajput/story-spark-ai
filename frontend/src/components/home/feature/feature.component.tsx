@@ -1,17 +1,19 @@
-import { Post } from "../../../models/post";
+﻿import { Post } from "../../../models/post";
 import { useGetFeaturedListsQuery } from "../../../redux/apis/post.api";
 import { formatDateShort } from "../../../utils/time-formate";
 import LoadingAnimation from "../../loading/loading.component";
 import SSProfile from "../../ui-component/ss-profile/ss-profile";
 import { useNavigate } from "react-router-dom";
 import BookmarkButton from "../../BookmarkButton";
+import React, { useState } from "react";
 
-import { FaLinkedin, FaEnvelope } from "react-icons/fa";
+import { FaLinkedin, FaEnvelope, FaLink } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 const FeatureComponent = () => {
   const { data, isLoading, isError } = useGetFeaturedListsQuery(undefined);
   const navigate = useNavigate();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Dynamic reading calculation logic
   const calculateReadingTime = (content: string): number => {
@@ -20,6 +22,14 @@ const FeatureComponent = () => {
     const words = content.trim().split(/\s+/).length;
 
     return Math.max(1, Math.ceil(words / 200));
+  };
+
+  const handleCopyLink = (e: React.MouseEvent, postId: string, postUrl: string) => {
+  e.stopPropagation();
+  navigator.clipboard.writeText(postUrl).then(() => {
+    setCopiedId(postId);
+    setTimeout(() => setCopiedId(null), 2000);
+    });
   };
 
   if (isLoading) {
@@ -82,11 +92,11 @@ const FeatureComponent = () => {
                             </p>
 
                             <span className="text-slate-400 dark:text-gray-600 text-xs">
-                              •
+                              ΓÇó
                             </span>
 
                             <p className="text-xs text-purple-400 font-medium">
-                              ⏱️ {calculateReadingTime(post.content)} min read
+                              ΓÅ▒∩╕Å {calculateReadingTime(post.content)} min read
                             </p>
                           </div>
                         </div>
@@ -98,7 +108,6 @@ const FeatureComponent = () => {
                       >
                         <BookmarkButton
                           storyId={post._id}
-                          bookmarks={post.bookmarks}
                           className="p-1.5 rounded-full hover:bg-slate-700/40 text-slate-400 hover:text-purple-400 transition-colors"
                         />
                       </div>
@@ -168,6 +177,19 @@ const FeatureComponent = () => {
                       >
                         <FaEnvelope size={16} />
                       </a>
+                      <button
+                          onClick={(e) => handleCopyLink(e, post._id, postUrl)}
+                          title={copiedId === post._id ? "Link copied!" : "Copy link"}
+                          aria-label="Copy post link"
+                          className={`transition-colors duration-200 ${
+                            copiedId === post._id
+                              ? "text-green-400"
+                              : "hover:text-blue-400"
+                          }`}
+
+                        >
+                          <FaLink size={16} />
+                        </button>
                     </div>
                   </div>
                 </div>

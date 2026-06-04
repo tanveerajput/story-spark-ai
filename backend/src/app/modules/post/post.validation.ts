@@ -23,9 +23,23 @@ const createPost = z.object({
     topic: z
       .array(TopicSchema)
       .min(2, { message: "At least two topics are required!" }),
+    language: z.string().optional(),
+  }),
+});
+
+const updatePost = z.object({
+  body: z.object({
+    title: z.string().min(3).optional(),
+    content: z.string().min(10).optional(),
+    tag: z.string().optional(),
+    imageURL: z.string().url().optional(),
+    topic: z.array(TopicSchema).min(2).optional(),
+    language: z.string().optional(),
+    isPublished: z.boolean().optional(),
   }),
 });
 
 export const PostValidator = {
   createPost,
+  updatePost,
 };

@@ -1,23 +1,31 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState, useRef, useMemo } from "react";
 import { getShortenedText, ITopicData, topicsData, getWordCount, SELECTED_TOPIC_CLASSES } from "./stories.utils";
 import toast, { Toaster } from "react-hot-toast";
-import { useCreatePostMutation } from "../../redux/apis/post.api";
+import { useCreatePostMutation, useDeletePostMutation } from "../../redux/apis/post.api";
 import { useGetProfileInfoQuery } from "../../redux/apis/user.api";
 import jsPDF from "jspdf";
+import StoryWorldMap from "../story-map/StoryWorldMap";
 import BookmarkButton from "../BookmarkButton";
 import logo from "../../assets/logoNew.png";
 import StoryGeneratingAnimation from "../loading/story-generating-animation.component";
-
+import AudioPlayer, { type AudioPlayerHandle, type NarrationPlaybackState } from "../AudioPlayer";
+import { useLocation } from "react-router-dom";
 import {
   useGenerateAlternateEndingsMutation,
   useGenerateFreeAlternateEndingsMutation,
 } from "../../redux/apis/ai.model.api";
+import ImageFallback from "../ImageFallback";
+import GeneratedStoryTimeline from "./GeneratedStoryTimeline";
 export interface IStories {
   uuid: string;
   title: string;
   content: string;
   tag: string;
+  emotions?: string[];
+  enhancedPrompt?: string;
   imageURL: string;
+  language?: string;
+  genre?: string;
 }
 
 interface IPost extends IStories {
@@ -33,6 +41,46 @@ interface StoriesComponentProps {
   setSelectedStoryIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
+type StorySentenceSegment = {
+  id: string;
+  text: string;
+  startWordIndex: number;
+  endWordIndex: number;
+};
+
+const buildSentenceSegments = (content: string): StorySentenceSegment[] => {
+  if (!content.trim()) {
+    return [];
+  }
+
+  const sentenceMatches = content.match(/[^.!?]+[.!?]*\s*/g) ?? [content];
+  const segments: StorySentenceSegment[] = [];
+  let wordCursor = 0;
+
+  sentenceMatches.forEach((sentence, index) => {
+    const trimmedSentence = sentence.trim();
+    if (!trimmedSentence) {
+      return;
+    }
+
+    const wordsInSentence = sentence.match(/\S+/g)?.length ?? 0;
+    const startWordIndex = wordCursor;
+    const endWordIndex =
+      wordsInSentence > 0 ? wordCursor + wordsInSentence - 1 : wordCursor;
+
+    segments.push({
+      id: `${index}-${startWordIndex}-${endWordIndex}`,
+      text: sentence,
+      startWordIndex,
+      endWordIndex,
+    });
+
+    wordCursor += wordsInSentence;
+  });
+
+  return segments;
+};
+
 const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   stories,
   isLogin,
@@ -40,6 +88,9 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   onPublishSuccess,
   setSelectedStoryIndex,
 }) => {
+  const location = useLocation();
+  const audioPlayerRef = useRef<AudioPlayerHandle>(null);
+
   // Start with a clean state that adapts dynamically
   const [selectedStory, setSelectedStory] = useState<IStories | null>(null);
   const [topics, setTopics] = useState<ITopicData[]>(topicsData);
@@ -47,10 +98,20 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   const [newTopicTitle, setNewTopicTitle] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+<<<<<<< HEAD
   const [selectedParagraphIndex, setSelectedParagraphIndex] =
     useState<number | null>(null);
+=======
+  const [showWorldMap, setShowWorldMap] = useState<boolean>(false);
+const [, setShowRemix] = useState<boolean>(false);
+>>>>>>> upstream/main
   const [createPost] = useCreatePostMutation();
+  const [deletePost] = useDeletePostMutation();
   const { data: profile } = useGetProfileInfoQuery(undefined, { skip: !isLogin });
+  const lastSavedContentRef = useRef<string>("");
+  const isSavingRef = useRef<boolean>(false);
+  const hasSavedSessionRef = useRef<boolean>(false);
+  const savedPostIdRef = useRef<string | null>(null);
   // Alternate ending state & hooks
   const [endingsCache, setEndingsCache] = useState<{
     [uuid: string]: { style: string; ending: string; fullStory: string }[];
@@ -60,6 +121,8 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   }>({});
   const [isGeneratingEndings, setIsGeneratingEndings] = useState<boolean>(false);
   const [activeEndingTab, setActiveEndingTab] = useState<string>("Happy Ending");
+  const [narrationWordIndex, setNarrationWordIndex] = useState<number>(0);
+  const [narrationState, setNarrationState] = useState<NarrationPlaybackState>("idle");
 
   const [generateAlternateEndings] = useGenerateAlternateEndingsMutation();
   const [generateFreeAlternateEndings] = useGenerateFreeAlternateEndingsMutation();
@@ -159,6 +222,9 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
         title: selectedStory.title,
         content: originalStoryContent[selectedStory.uuid] || selectedStory.content,
         tag: selectedStory.tag,
+
+        language: selectedStory.language || "English",
+
       };
 
       const generationRequest = isLogin
@@ -213,9 +279,96 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     toast.success("Reverted to original story ending!");
   };
 
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [isPausedAudio, setIsPausedAudio] = useState<boolean>(false);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleTextToSpeech = () => {
+    if (!selectedStory?.content) return;
+
+    if (!("speechSynthesis" in window)) {
+      toast.error("Text-to-speech is not supported in this browser.");
+      return;
+    }
+
+    if (isPlayingAudio) {
+      if (isPausedAudio) {
+        window.speechSynthesis.resume();
+        setIsPausedAudio(false);
+        toast.success("Resumed reading story");
+      } else {
+        window.speechSynthesis.pause();
+        setIsPausedAudio(true);
+        toast.success("Paused reading story");
+      }
+    } else {
+      window.speechSynthesis.cancel();
+      const cleanContent = selectedStory.content.replace(/<[^>]*>/g, "");
+      const utterance = new SpeechSynthesisUtterance(cleanContent);
+      
+      utterance.onend = () => {
+        setIsPlayingAudio(false);
+        setIsPausedAudio(false);
+      };
+
+      utterance.onerror = (e) => {
+        console.error("SpeechSynthesis error:", e);
+        setIsPlayingAudio(false);
+        setIsPausedAudio(false);
+      };
+
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(
+        (v) => v.lang.startsWith("en-") && v.name.includes("Google")
+      ) || voices.find((v) => v.lang.startsWith("en-"));
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+      setIsPlayingAudio(true);
+      setIsPausedAudio(false);
+      toast.success("Playing story audio");
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleStopAudio = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingAudio(false);
+    setIsPausedAudio(false);
+    toast.success("Stopped audio playback");
+  };
+
+  useEffect(() => {
+    return () => {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     setSelectTopics(topics.filter((topic) => topic.selected));
   }, [topics]);
+
+  useEffect(() => {
+    const player = audioPlayerRef.current;
+    return () => {
+      player?.stop();
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setNarrationWordIndex(0);
+    setNarrationState("idle");
+  }, [selectedStory?.uuid]);
+
+  const sentenceSegments = useMemo(() => {
+    return buildSentenceSegments(selectedStory?.content ?? "");
+  }, [selectedStory?.content]);
 
   // Sync state instantly whenever a new template is submitted or selected
   useEffect(() => {
@@ -224,18 +377,44 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     } else {
       setSelectedStory(null);
     }
+    // Reset auto-save status for new story session
+    lastSavedContentRef.current = "";
+    hasSavedSessionRef.current = false;
+    savedPostIdRef.current = null;
   }, [stories]);
 
   useEffect(() => {
     const autoSaveStory = async () => {
+<<<<<<< HEAD
       if (!selectedStory) return;
 
+=======
+      // 1. Prevent guest auto-save requests
+      if (!isLogin || !selectedStory) return;
+
+      // 2. Prevent duplicate auto-save requests for unchanged story content
+      if (selectedStory.content === lastSavedContentRef.current) {
+        return;
+      }
+
+      // 3. Only one draft/post is created per story session (prevent variation/topic duplicates)
+      if (hasSavedSessionRef.current) {
+        return;
+      }
+
+      // 4. Prevent duplicate network calls while a save is already running
+      if (isSavingRef.current) return;
+
+      isSavingRef.current = true;
+
+>>>>>>> upstream/main
       const post: IPost = {
         ...selectedStory,
         topic: selectTopics,
       };
 
       try {
+<<<<<<< HEAD
         await createPost(post).unwrap();
         toast.success("Story auto-saved!");
       } catch (error) {
@@ -250,6 +429,31 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     story: IStories,
     index: number
   ) => {
+=======
+        const result = await createPost(post).unwrap();
+        if (result && result.data && result.data._id) {
+          savedPostIdRef.current = result.data._id;
+        }
+        lastSavedContentRef.current = selectedStory.content;
+        hasSavedSessionRef.current = true;
+        toast.success("Story auto-saved!");
+      } catch (error) {
+        console.error("Auto-save failed", error);
+      } finally {
+        isSavingRef.current = false;
+      }
+    };
+
+    // Debounce to prevent multiple immediate renders/rerenders from triggering save
+    const timer = setTimeout(() => {
+      autoSaveStory();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [selectedStory, selectedStory?.content, isLogin, selectTopics, createPost]);
+
+  const handelStorySelection = (story: IStories) => {
+>>>>>>> upstream/main
     setSelectedStory(story);
     setSelectedStoryIndex(index);
   };
@@ -313,11 +517,8 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
   };
 
   const handleExportPDF = async () => {
-    if (!selectedStory) {
-      toast.error("No story available to export.");
-      return;
-    }
-
+    if (!selectedStory) { toast.error("No story available to export."); return; }
+    if (!selectedStory.content?.trim()) {toast.error("Story content is empty. Cannot export.");return;}
     const toastId = toast.loading("Preparing your premium PDF...");
 
     try {
@@ -539,36 +740,31 @@ const StoriesViewComponent: React.FC<StoriesComponentProps> = ({
     }
   };
 
-  const handleExportMarkdown = () => {
-    if (!selectedStory) {
-      toast.error("No story available to export.");
-      return;
-    }
+  const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
+const getSafeFileName = (title: string, ext: string) => {
+  return `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.${ext}`;
+};
+
+const handleExportMarkdown = () => {
+    if (!selectedStory) { toast.error("No story available to export."); return; }
+    if (!selectedStory.content?.trim()) {toast.error("Story content is empty. Cannot export.");return;}
     try {
       const title = selectedStory.title || "Story";
       const content = selectedStory.content || "";
       const tag = selectedStory.tag || "General";
       const authorName = isLogin && profile?.name ? profile.name : "Anonymous";
       const isoDate = new Date().toISOString().split("T")[0];
-
-      const cleanTitle = title.replace(/"/g, '\\"');
-      const cleanTag = tag.replace(/"/g, '\\"');
-      const cleanAuthor = authorName.replace(/"/g, '\\"');
-
-      const markdownContent = `---
-title: "${cleanTitle}"
-tag: "${cleanTag}"
-author: "${cleanAuthor}"
-date: "${isoDate}"
----
-
-# ${title}
-
-${content}
-`;
-
+      const markdownContent = `---\ntitle: "${title.replace(/"/g, '\\"')}"\ntag: "${tag.replace(/"/g, '\\"')}"\nauthor: "${authorName.replace(/"/g, '\\"')}"\ndate: "${isoDate}"\n---\n\n# ${title}\n\n${content}\n`;
       const blob = new Blob([markdownContent], { type: "text/markdown;charset=utf-8;" });
+<<<<<<< HEAD
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -580,12 +776,13 @@ ${content}
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
+=======
+      downloadBlob(blob, getSafeFileName(title, "md"));
+>>>>>>> upstream/main
       toast.success("Markdown downloaded!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to export Markdown.");
-    }
+    } catch (error) { console.error(error); toast.error("Failed to export Markdown."); }
   };
+
   const handelPublishStory = async () => {
     if (!isLogin) {
       toast.error("Please login to publish the story.");
@@ -605,6 +802,13 @@ ${content}
     };
     setLoading(true);
     try {
+      if (savedPostIdRef.current) {
+        try {
+          await deletePost(savedPostIdRef.current).unwrap();
+        } catch (deleteError) {
+          console.warn("Failed to delete auto-saved draft before publishing:", deleteError);
+        }
+      }
       const result = await createPost(post).unwrap();
       if (result) {
         toast.success("Story published successfully!");
@@ -624,7 +828,20 @@ ${content}
     return Math.max(1, Math.ceil(words / 200));
   };
 
+<<<<<<< HEAD
 
+=======
+  const isNarrationActive = narrationState !== "idle";
+
+
+if (isLoading) {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <StoryGeneratingAnimation />
+    </div>
+  );
+}
+>>>>>>> upstream/main
   if (!selectedStory) {
     return null;
   }
@@ -646,9 +863,22 @@ ${content}
         <div className="col-span-1 lg:col-span-8 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div>
-              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400">
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400 mb-2">
                 {selectedStory?.title}
               </h1>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-purple-900/60 text-purple-300 border border-purple-700/50 py-1 px-3 text-xs font-semibold">
+                  ≡ƒÄ¡ {selectedStory.tag}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50 py-1 px-3 text-xs font-semibold">
+                  ≡ƒîÉ {selectedStory.language || "English"}
+                </span>
+                {selectedStory.emotions && selectedStory.emotions.length > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-700/50 py-1 px-3 text-xs font-semibold">
+                    ≡ƒÿè {selectedStory.emotions.join(", ")}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex justify-start sm:justify-end">
               <div className="flex -space-x-5">
@@ -709,6 +939,22 @@ ${content}
                 </button>
                 <button
                   type="button"
+                  className="rounded-lg px-4 py-2 bg-violet-700 text-slate-200 font-semibold cursor-pointer hover:bg-violet-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowWorldMap(true)}
+                  disabled={!selectedStory}
+                >
+                  ≡ƒù║∩╕Å World Map
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg px-4 py-2 bg-fuchsia-700 text-slate-200 font-semibold cursor-pointer hover:bg-fuchsia-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowRemix(true)}
+                  disabled={!selectedStory}
+                >
+                  ≡ƒöÇ Remix
+                </button>
+                <button
+                  type="button"
                   id="publish-story-btn"
                   className={`rounded-lg px-5 py-2 font-semibold flex items-center space-x-2 cursor-pointer bg-blue-600 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${loading ? "" : "hover:bg-blue-500 hover:shadow-lg active:scale-95"
                     }`}
@@ -719,7 +965,20 @@ ${content}
                 </button>
               </div>
             </div>
+
+            {selectedStory.enhancedPrompt && (
+              <div className="mb-6 p-4 bg-indigo-900/30 border border-indigo-700/50 rounded-xl relative z-10">
+                <h4 className="text-sm font-semibold text-indigo-300 mb-2 flex items-center gap-2">
+                  <i className="fas fa-wand-magic-sparkles"></i> AI Enhanced Prompt
+                </h4>
+                <p className="text-slate-300 text-sm italic break-words whitespace-pre-wrap">
+                  {selectedStory.enhancedPrompt}
+                </p>
+              </div>
+            )}
+
             <div id="story-content" className="prose prose-invert max-w-none text-slate-300 leading-relaxed tracking-wide relative z-10">
+<<<<<<< HEAD
               <div className="space-y-5">
                 {selectedStory.content
                   .split("\n\n")
@@ -747,6 +1006,43 @@ ${content}
                     </div>
                   ))}
               </div>
+=======
+              <p className="break-words whitespace-pre-wrap">
+                {sentenceSegments.length > 0 ? (
+                  sentenceSegments.map((segment: StorySentenceSegment) => {
+                    const isActiveSentence =
+                      isNarrationActive &&
+                      narrationWordIndex >= segment.startWordIndex &&
+                      narrationWordIndex <= segment.endWordIndex;
+
+                    return (
+                      <span
+                        key={segment.id}
+                        className={
+                          isActiveSentence
+                            ? "rounded-md bg-indigo-500/20 px-0.5 py-0.5 text-indigo-100 ring-1 ring-indigo-400/30"
+                            : undefined
+                        }
+                      >
+                        {segment.text}
+                      </span>
+                    );
+                  })
+                ) : (
+                  selectedStory.content
+                )}
+              </p>
+            </div>
+
+            <div className="relative z-10 mt-6">
+              <AudioPlayer
+                ref={audioPlayerRef}
+                text={selectedStory.content}
+                title={selectedStory.title}
+                onWordIndexChange={setNarrationWordIndex}
+                onPlaybackStateChange={setNarrationState}
+              />
+>>>>>>> upstream/main
             </div>
           </div>
           <div className="mt-7">
@@ -954,6 +1250,13 @@ ${content}
         </div>
 
         <div className="col-span-1 lg:col-span-4">
+          <GeneratedStoryTimeline
+            content={selectedStory.content}
+            title={selectedStory.title}
+            narrationState={narrationState}
+            narrationWordIndex={narrationWordIndex}
+          />
+
           <div className="mb-5">
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-blue-400">
               Preview
@@ -962,7 +1265,7 @@ ${content}
           <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden group">
             <div className="relative flex flex-col rounded-lg">
               <div className="relative m-3 overflow-hidden text-white rounded-xl">
-                <img
+                <ImageFallback
                   src={selectedStory.imageURL}
                   alt="card-image"
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
@@ -974,8 +1277,11 @@ ${content}
                     <div className="inline-flex items-center rounded-full bg-purple-600 py-1 px-3 text-xs font-semibold text-white shadow-sm">
                       {selectedStory.tag.toUpperCase()}
                     </div>
+                    <div className="inline-flex items-center rounded-full bg-indigo-600 py-1 px-3 text-xs font-semibold text-white shadow-sm">
+                      ≡ƒîÉ {(selectedStory.language || "English").toUpperCase()}
+                    </div>
                     <div className="inline-flex items-center rounded-full bg-slate-700 py-1 px-2.5 text-xs font-medium text-slate-300 shadow-sm gap-1">
-                      ⏱️ {calculateReadingTime(selectedStory.content)} min read
+                      ΓÅ▒∩╕Å {calculateReadingTime(selectedStory.content)} min read
                     </div>
                   </div>
                   <div>
@@ -993,6 +1299,13 @@ ${content}
           </div>
         </div>
       </div>
+      {showWorldMap && selectedStory && (
+        <StoryWorldMap
+          story={selectedStory.content}
+          title={selectedStory.title}
+          onClose={() => setShowWorldMap(false)}
+        />
+      )}
       <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
