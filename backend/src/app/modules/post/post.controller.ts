@@ -89,7 +89,15 @@ const doFeaturedPosts = catchAsync(async (req: Request, res: Response) => {
 
 const getSinglePost = catchAsync(async (req: Request, res: Response) => {
   const id = routeParam(req.params.id);
-  const result = await PostService.getSinglePost(id);
+  
+  let token = null;
+  try {
+    token = getToken(req);
+  } catch (error) {
+    // Guest or unauthenticated request
+  }
+
+  const result = await PostService.getSinglePost(id, token);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
