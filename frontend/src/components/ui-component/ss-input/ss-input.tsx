@@ -59,6 +59,7 @@ const SSInput = <T extends FieldValues>({
           type={inputType}
           id={name}
           placeholder={placeholder}
+          required={required} 
           autoComplete={autoComplete}
           autoFocus={autoFocus}
           {...register(name, validation)}
