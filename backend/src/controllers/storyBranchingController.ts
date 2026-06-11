@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { generateStory } from "../services/ai.service";
 import sendResponse from "../shared/send_response";
 import { storyQueue } from "../services/storyRequestQueue";
+import { compressContext, serializeLore } from "../utils/contextCompressor";
 
 const sanitizeJsonText = (rawText: string): string => {
   const trimmed = rawText.trim();
@@ -20,9 +21,20 @@ const parseRawStoryText = (text: string) => {
     choices: [
       "Explore the surroundings",
       "Search for another way",
-      "Wait and see what happens"
-    ]
+      "Wait and see what happens",
+    ],
   };
+};
+
+const buildCompressedContext = (storyContext: string): string => {
+  if (!storyContext.trim()) return "";
+
+  const rawNodes = storyContext
+    .split(/(?=\[Player chose:)/g)
+    .map((chunk, i) => ({ id: `seg-${i}`, text: chunk.trim() }));
+
+  const { lore, window: contextWindow } = compressContext(rawNodes);
+  return `${serializeLore(lore)}\n\n${contextWindow.map((n) => n.text).join("\n")}`;
 };
 
 export const StoryBranchingController = {
@@ -30,14 +42,18 @@ export const StoryBranchingController = {
     try {
       const { storyContext, selectedChoice, genre } = req.body;
 
-      // Calculate segmentIndex based on the number of selection steps in storyContext
-      const segmentIndex = (storyContext.match(/\[Player chose:/g) || []).length + 1;
+      const segmentIndex =
+        (storyContext.match(/\[Player chose:/g) || []).length + 1;
 
-      // Build prompt to request JSON structure
+      const compressedContext = buildCompressedContext(storyContext || "");
+      const contextBlock = compressedContext.trim()
+        ? compressedContext.trim()
+        : "This is the start of the story.";
+
       const prompt = `
 You are an interactive fiction writer. Generate the next segment of a branching story.
 Genre: ${genre || "general"}
-Story so far: ${storyContext || "This is the start of the story."}
+Story so far: ${contextBlock}
 ${selectedChoice ? `The player chose: "${selectedChoice}"` : "This is the introduction/first scene of the story."}
 
 Task:
@@ -61,14 +77,15 @@ Task:
         const cleaned = sanitizeJsonText(result.story);
         parsed = JSON.parse(cleaned);
 
-        // Ensure storySegment and choices exist
         if (!parsed.storySegment || !Array.isArray(parsed.choices)) {
           throw new Error("Missing required fields in parsed JSON");
         }
       } catch (e) {
-        console.warn("[Branching] JSON parsing failed, attempting fallback parsing. Error:", e);
+        console.warn(
+          "[Branching] JSON parsing failed, attempting fallback parsing. Error:",
+          e
+        );
 
-        // Try regex-based extraction as a secondary backup
         const jsonMatch = result.story.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           try {
@@ -84,12 +101,11 @@ Task:
         }
       }
 
-      // Ensure we have exactly 3 choices
       if (!parsed.choices || parsed.choices.length === 0) {
         parsed.choices = [
           "Explore the surroundings",
           "Search for another way",
-          "Wait and see what happens"
+          "Wait and see what happens",
         ];
       } else if (parsed.choices.length < 3) {
         while (parsed.choices.length < 3) {
@@ -110,9 +126,7 @@ Task:
         },
       });
     } catch (error) {
-      const detail =
-        error instanceof Error ? error.message : String(error);
-
+      const detail = error instanceof Error ? error.message : String(error);
       console.error("[StoryBranching] generation error:", detail);
 
       sendResponse(res, {
