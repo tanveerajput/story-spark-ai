@@ -1394,6 +1394,7 @@ html.dark .contact-input::placeholder { color: rgba(148, 163, 184, 0.78); }
 }
 
 .contact-float-input {
+  box-sizing: border-box;
   width: 100%;
   height: 52px;
   padding: 20px 16px 6px 42px;
