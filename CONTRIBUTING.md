@@ -190,6 +190,11 @@ Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
 ---
 
 ## Frequently Asked Questions
+## Need Help?
+
+
+If you get stuck, open a [Discussion](https://github.com/ronisarkarexe/story-spark-ai/discussions) or comment on the relevant issue. We're happy to help!
+## **Frequently Asked Questions**
 
 1. **Do I need to get assigned before working on an issue?**
    - Yes. Please wait until a maintainer assigns the issue to you before starting work. Contributions made without assignment may not be accepted if another contributor is already working on the same issue.
