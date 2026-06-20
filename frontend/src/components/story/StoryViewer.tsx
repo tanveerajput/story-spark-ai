@@ -101,7 +101,7 @@ const StoryViewer: React.FC<Props> = ({
             {progress}%
           </span>
         </div>
-      </div>
+      </div>//dummy change to trigger merge
       <div className="max-w-4xl mx-auto">
         {chapters.map((chapter) => (
           <div key={chapter.id} className="mb-16">
