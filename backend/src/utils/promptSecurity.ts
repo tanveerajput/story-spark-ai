@@ -51,9 +51,9 @@ const FORBIDDEN_PATTERNS: RegExp[] = [
  */
 const normalizeInput = (input: string): string => {
   return (input ?? "")
-    .normalize("NFKC")
-    .replace(/\u200B|\u200C|\u200D|\uFEFF|\u2060|\u180E/g, "")
-    .replace(/[\s\u00A0]+/g, " ")
+    .normalize("NFKC") // Unicode normalization
+    .replace(/[\u200B-\u200D\uFEFF\u2060\u180E]/g, "") // Remove zero-width characters
+    .replace(/[\s\u00A0]+/g, " ") // Collapse whitespace
     .trim();
 };
 
@@ -80,7 +80,7 @@ export const validateOutput = (aiResponse: string): string => {
     throw new Error("Security Violation: Invalid AI response.");
   }
 
-  const lowerResponse = aiResponse.toLowerCase();
+  const lowerResponse = normalizeInput(aiResponse).toLowerCase();
 
   const leakPatterns = [
     "system prompt:",
@@ -94,6 +94,8 @@ export const validateOutput = (aiResponse: string): string => {
     "confidential instructions",
     "ignore the rules",
     "comply with your instructions",
+    "developer instructions",
+    "system prompt"
   ];
 
   for (const pattern of leakPatterns) {
@@ -105,4 +107,3 @@ export const validateOutput = (aiResponse: string): string => {
   assertContentSafe(aiResponse);
 
   return aiResponse;
-};
